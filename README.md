@@ -40,3 +40,9 @@ To verify it is working, after a run check `BepInEx/config/com.bungus.everything
 
 - Bungus
 - Built with [BepInEx](https://github.com/BepInEx/BepInEx) and [HarmonyX](https://github.com/BepInEx/HarmonyX).
+
+## Support
+
+If you find this useful, you can buy me a coffee:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z852YLV)
