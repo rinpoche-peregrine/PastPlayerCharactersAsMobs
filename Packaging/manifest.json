@@ -1,0 +1,7 @@
+{
+	"name": "PastPlayerCharactersAsMobs",
+	"version_number": "0.1.0",
+	"website_url": "https://github.com/rinpoche-peregrine/PastPlayerCharactersAsMobs",
+	"description": "Snapshots your build every 5 levels (starting at 20). Future runs will encounter past selves as Alpha mobs.",
+	"dependencies": []
+}

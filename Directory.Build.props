@@ -1,0 +1,8 @@
+<Project>
+	<PropertyGroup>
+		<GameDir>G:\SteamLibrary\steamapps\common\Everything is Crab</GameDir>
+		<BepInExDir>$(GameDir)\BepInEx</BepInExDir>
+		<InteropDir>$(BepInExDir)\interop</InteropDir>
+		<PluginsDir>$(BepInExDir)\plugins</PluginsDir>
+	</PropertyGroup>
+</Project>

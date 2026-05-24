@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+		<AssemblyName>PastPlayerCharactersAsMobsPlugin</AssemblyName>
+		<RootNamespace>PastPlayerCharactersAsMobsPlugin</RootNamespace>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+
+	<!-- Keep PluginVersion in sync with MyPluginInfo.cs and Packaging/manifest.json. -->
+	<PropertyGroup>
+		<PluginVersion>0.1.0</PluginVersion>
+		<PackageAuthor>Bungus</PackageAuthor>
+		<PackageName>PastPlayerCharactersAsMobs</PackageName>
+		<PackageFullName>$(PackageAuthor)-$(PackageName)</PackageFullName>
+		<PackageStagingDir>$(IntermediateOutputPath)package</PackageStagingDir>
+		<PackageOutputDir>$(MSBuildProjectDirectory)\..\dist</PackageOutputDir>
+		<PackageZipPath>$(PackageOutputDir)\$(PackageFullName)-$(PluginVersion).zip</PackageZipPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="$(BepInExDir)\core\BepInEx.Core.dll"><Private>false</Private></Reference>
+		<Reference Include="$(BepInExDir)\core\BepInEx.Unity.IL2CPP.dll"><Private>false</Private></Reference>
+		<Reference Include="$(BepInExDir)\core\BepInEx.Unity.Common.dll"><Private>false</Private></Reference>
+		<Reference Include="$(BepInExDir)\core\0Harmony.dll"><Private>false</Private></Reference>
+		<Reference Include="$(BepInExDir)\core\Il2CppInterop.Runtime.dll"><Private>false</Private></Reference>
+		<Reference Include="$(BepInExDir)\core\Il2CppInterop.Common.dll"><Private>false</Private></Reference>
+		<Reference Include="$(InteropDir)\*.dll"><Private>false</Private></Reference>
+	</ItemGroup>
+
+	<Target Name="DeployPlugin" AfterTargets="Build">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)" />
+		<Message Importance="high" Text="Deployed $(AssemblyName).dll to $(PluginsDir)" />
+	</Target>
+
+	<Target Name="PackagePlugin" AfterTargets="DeployPlugin" Condition="'$(Configuration)' == 'Release'">
+		<ItemGroup>
+			<PackageRootFiles Include="$(MSBuildProjectDirectory)\..\Packaging\manifest.json" />
+			<PackageRootFiles Include="$(MSBuildProjectDirectory)\..\Packaging\icon.png" />
+			<PackageRootFiles Include="$(MSBuildProjectDirectory)\..\Packaging\README.md" />
+			<PackageRootFiles Include="$(MSBuildProjectDirectory)\..\Packaging\CHANGELOG.md" />
+		</ItemGroup>
+		<RemoveDir Directories="$(PackageStagingDir)" />
+		<MakeDir Directories="$(PackageStagingDir);$(PackageStagingDir)\plugins\$(PackageFullName);$(PackageOutputDir)" />
+		<Copy SourceFiles="@(PackageRootFiles)" DestinationFolder="$(PackageStagingDir)" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PackageStagingDir)\plugins\$(PackageFullName)" />
+		<Delete Files="$(PackageZipPath)" Condition="Exists('$(PackageZipPath)')" />
+		<ZipDirectory SourceDirectory="$(PackageStagingDir)" DestinationFile="$(PackageZipPath)" />
+		<Message Importance="high" Text="Packaged: $(PackageZipPath)" />
+	</Target>
+</Project>
