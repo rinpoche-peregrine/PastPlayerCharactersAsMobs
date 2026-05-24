@@ -26,8 +26,19 @@ public class Plugin : BasePlugin {
 		Log.LogInfo($"Loaded {Store.TotalSnapshots} existing snapshot(s) from {storeFile}");
 
 		var harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
-		harmony.PatchAll(typeof(Plugin).Assembly);
-		Log.LogInfo($"Harmony patches applied: {harmony.GetPatchedMethods().Count()}");
+		int ok = 0, failed = 0;
+		foreach (var t in typeof(Plugin).Assembly.GetTypes()) {
+			if (t.GetCustomAttributes(typeof(HarmonyPatch), true).Length == 0) continue;
+			try {
+				harmony.CreateClassProcessor(t).Patch();
+				ok++;
+				Log.LogInfo($"Patched: {t.Name}");
+			} catch (System.Exception ex) {
+				failed++;
+				Log.LogError($"Patch failed on {t.Name}: {ex.Message}");
+			}
+		}
+		Log.LogInfo($"Harmony patches applied: {ok} ok, {failed} failed");
 	}
 }
 
@@ -37,6 +48,9 @@ public class ModConfig {
 	public ConfigEntry<int> LevelsBetweenSnapshots;
 	public ConfigEntry<int> PerBucketCap;
 	public ConfigEntry<float> LossKeepChance;
+	public ConfigEntry<float> GhostSpawnChance;
+	public ConfigEntry<int> GhostLevelTolerance;
+	public ConfigEntry<bool> EnableGhostSpawning;
 
 	public ModConfig(ConfigFile cfg) {
 		MinLevel = cfg.Bind("Snapshot", "MinLevel", 20,
@@ -47,5 +61,11 @@ public class ModConfig {
 			"Max snapshots stored per level bucket. When full, the oldest 50% is candidate for random eviction.");
 		LossKeepChance = cfg.Bind("Snapshot", "LossKeepChance", 0.25f,
 			"On a non-winning run, each buffered snapshot is committed to disk with this chance.");
+		EnableGhostSpawning = cfg.Bind("Spawn", "EnableGhostSpawning", true,
+			"Master switch for spawning past-self ghosts as Alpha+Shiny mobs.");
+		GhostSpawnChance = cfg.Bind("Spawn", "GhostSpawnChance", 0.005f,
+			"Chance per regular enemy spawn that a matching snapshot is promoted to a past-self ghost (0.005 = 1 in 200).");
+		GhostLevelTolerance = cfg.Bind("Spawn", "GhostLevelTolerance", 2,
+			"A snapshot is eligible to spawn if its EvolutionLevel is within +/- this many levels of the current player level.");
 	}
 }

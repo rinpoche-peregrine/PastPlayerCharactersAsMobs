@@ -10,7 +10,7 @@
 
 	<!-- Keep PluginVersion in sync with MyPluginInfo.cs and Packaging/manifest.json. -->
 	<PropertyGroup>
-		<PluginVersion>0.1.0</PluginVersion>
+		<PluginVersion>0.2.0</PluginVersion>
 		<PackageAuthor>Bungus</PackageAuthor>
 		<PackageName>PastPlayerCharactersAsMobs</PackageName>
 		<PackageFullName>$(PackageAuthor)-$(PackageName)</PackageFullName>

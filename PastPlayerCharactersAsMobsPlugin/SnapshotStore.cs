@@ -85,6 +85,17 @@ public class SnapshotStore {
 		return kept;
 	}
 
+	// Returns snapshots whose EvolutionLevel is within +/- tolerance of the given level.
+	public IReadOnlyList<BuildSnapshot> ForLevel(int level, int tolerance) {
+		var result = new List<BuildSnapshot>();
+		foreach (var kv in _data.Buckets) {
+			if (!int.TryParse(kv.Key, out var bucketLevel)) continue;
+			if (Math.Abs(bucketLevel - level) > tolerance) continue;
+			result.AddRange(kv.Value);
+		}
+		return result;
+	}
+
 	void AddWithEviction(BuildSnapshot snap) {
 		var bucketKey = snap.EvolutionLevel.ToString();
 		if (!_data.Buckets.TryGetValue(bucketKey, out var bucket)) {
