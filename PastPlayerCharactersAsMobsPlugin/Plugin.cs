@@ -1,5 +1,4 @@
 using System.IO;
-using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -39,6 +38,31 @@ public class Plugin : BasePlugin {
 			}
 		}
 		Log.LogInfo($"Harmony patches applied: {ok} ok, {failed} failed");
+
+		try {
+			Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<GhostNotificationOverlay>();
+			AddComponent<GhostNotificationOverlay>();
+			Log.LogInfo("GhostNotificationOverlay registered.");
+		} catch (System.Exception ex) {
+			Log.LogError($"Failed to register notification overlay: {ex.Message}");
+		}
+
+		try {
+			Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<GhostDirectionSync>();
+			Log.LogInfo("GhostDirectionSync registered.");
+		} catch (System.Exception ex) {
+			Log.LogError($"Failed to register direction sync: {ex.Message}");
+		}
+
+		try {
+			var opts = new Il2CppInterop.Runtime.Injection.RegisterTypeOptions {
+				Interfaces = new[] { typeof(World.Characters.IVisualStatCharacter) }
+			};
+			Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<GhostVisualShim>(opts);
+			Log.LogInfo("GhostVisualShim registered (implements IVisualStatCharacter).");
+		} catch (System.Exception ex) {
+			Log.LogError($"Failed to register GhostVisualShim: {ex.Message}");
+		}
 	}
 }
 
@@ -51,6 +75,9 @@ public class ModConfig {
 	public ConfigEntry<float> GhostSpawnChance;
 	public ConfigEntry<int> GhostLevelTolerance;
 	public ConfigEntry<bool> EnableGhostSpawning;
+	public ConfigEntry<bool> ApplyGhostStats;
+	public ConfigEntry<float> GhostStatScale;
+	public ConfigEntry<bool> ShowGhostNotifications;
 
 	public ModConfig(ConfigFile cfg) {
 		MinLevel = cfg.Bind("Snapshot", "MinLevel", 20,
@@ -67,5 +94,11 @@ public class ModConfig {
 			"Chance per regular enemy spawn that a matching snapshot is promoted to a past-self ghost (0.005 = 1 in 200).");
 		GhostLevelTolerance = cfg.Bind("Spawn", "GhostLevelTolerance", 2,
 			"A snapshot is eligible to spawn if its EvolutionLevel is within +/- this many levels of the current player level.");
+		ApplyGhostStats = cfg.Bind("Spawn", "ApplyGhostStats", true,
+			"Override the spawned ghost's stats (MaxHp, BasePhysicalDamage, etc.) with the snapshot's values. Disable to keep generic Alpha behavior.");
+		GhostStatScale = cfg.Bind("Spawn", "GhostStatScale", 1.0f,
+			"Multiplier applied to transferred stats. 1.0 = full snapshot power, 0.5 = half. Tune to taste.");
+		ShowGhostNotifications = cfg.Bind("UI", "ShowGhostNotifications", false,
+			"Show a fading bottom-left text notification when a past self spawns nearby.");
 	}
 }

@@ -85,10 +85,44 @@ public static class GhostSpawnPatch {
 					if (pcomp != null) distFromPlayer = Vector3.Distance(pcomp.transform.position, pos);
 				}
 			} catch { }
+			int applied = 0;
+			if (Plugin.Config.ApplyGhostStats.Value && _lastPick != null) {
+				applied = GhostStatApplier.Apply(__result, _lastPick, Plugin.Config.GhostStatScale.Value);
+			}
+			UnityEngine.GameObject reconstructed = null;
+			if (_lastPick != null) {
+				reconstructed = GhostRebuild.Apply(__result, _lastPick);
+				if (reconstructed != null) {
+					try { reconstructed.AddComponent<GhostDirectionSync>(); } catch (System.Exception ex) { Plugin.Log.LogWarning($"AddComponent<GhostDirectionSync> failed: {ex.Message}"); }
+					try {
+						var enemyComp = __result.TryCast<UnityEngine.Component>();
+						if (enemyComp != null) GhostRegistry.Register(enemyComp, reconstructed);
+					} catch (System.Exception ex) { Plugin.Log.LogWarning($"GhostRegistry.Register failed: {ex.Message}"); }
+				}
+			}
+			bool cloned = reconstructed != null;
 			Plugin.Log.LogInfo(
 				$"Past Self spawned: name={nameInfo} pos=({pos.x:F1},{pos.y:F1},{pos.z:F1})"
 				+ (distFromPlayer.HasValue ? $" dist_from_player={distFromPlayer:F1}" : "")
+				+ $" stats_applied={applied} rebuilt={cloned}"
 			);
+
+			// Show an on-screen notification summarizing the build (gated by config).
+			if (_lastPick != null && Plugin.Config.ShowGhostNotifications.Value) {
+				var parts = new System.Collections.Generic.List<string>();
+				parts.Add($"Lv{_lastPick.EvolutionLevel}");
+				if (!string.IsNullOrEmpty(_lastPick.Genetic1) && _lastPick.Genetic1 != "Standard") parts.Add(_lastPick.Genetic1);
+				if (!string.IsNullOrEmpty(_lastPick.Genetic2) && _lastPick.Genetic2 != "Standard") parts.Add(_lastPick.Genetic2);
+				if (_lastPick.Specialisations != null && _lastPick.Specialisations.Count > 0)
+					parts.Add(string.Join(", ", _lastPick.Specialisations));
+				if (_lastPick.Affinities != null && _lastPick.Affinities.Count > 0) {
+					var top = "";
+					int topVal = int.MinValue;
+					foreach (var kv in _lastPick.Affinities) if (kv.Value > topVal) { top = kv.Key; topVal = kv.Value; }
+					if (!string.IsNullOrEmpty(top)) parts.Add($"{top}+{topVal}");
+				}
+				GhostNotificationOverlay.Show("Past Self appeared: " + string.Join(" · ", parts));
+			}
 		} catch (Exception ex) {
 			Plugin.Log.LogError($"GhostSpawnPatch.Postfix failed: {ex}");
 		} finally {

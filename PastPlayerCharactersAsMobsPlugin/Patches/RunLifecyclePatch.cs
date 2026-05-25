@@ -28,6 +28,7 @@ public static class RunEndedPatch {
 				|| reason == ERunEndReason.WonBySurviving;
 			var buffered = Plugin.Store.RunBufferCount;
 			var kept = Plugin.Store.CommitRunBuffer(isWin, Plugin.Config.LossKeepChance.Value);
+			GhostRegistry.PruneStale();
 			RunState.OnRunEnded();
 			Plugin.Log.LogInfo($"Run ended ({reason}). isWin={isWin}, buffered={buffered}, committed={kept}, total stored={Plugin.Store.TotalSnapshots}");
 		} catch (Exception ex) {

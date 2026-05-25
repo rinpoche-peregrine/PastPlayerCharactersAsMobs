@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Unlockables.Genetics;
+using Cosmetics;
+using World;
+using World.Characters;
+using World.Evolutions.Affinities;
+using World.Evolutions.Specializations;
+using World.Evolutions;
 using World.Stats;
 
 namespace PastPlayerCharactersAsMobsPlugin;
@@ -12,6 +17,18 @@ public static class SnapshotBuilder {
 	// to call the generic .Value getter (returns float or int). HybridStatValue also gets its
 	// PercentageMultiplier captured as a sibling stat.
 	static readonly string[] StatProperties = {
+		// AEntityStats — shared between player and enemy; useful for Phase 3 stat transfer to ghosts
+		"MaxHp",
+		"HpRegeneration",
+		"BasePhysicalDamage",
+		"BaseAbilityDamage",
+		"GeneralDamageMultiplier",
+		"MovementSpeed",
+		"SprintSpeedMultiplier",
+		"Size",
+		"AttackAreaModifier",
+		"CooldownModifier",
+		// PlayerStats-only — captured for completeness, ignored by enemy applier
 		"DodgeChance",
 		"DamageReductionPercentage",
 		"EffectAreaSize",
@@ -46,6 +63,10 @@ public static class SnapshotBuilder {
 		};
 		CaptureStats(snap);
 		CaptureRunData(snap);
+		CaptureAffinities(snap);
+		CaptureSpecialisations(snap);
+		CaptureCosmetics(snap);
+		CaptureAbilityPicks(snap);
 		return snap;
 	}
 
@@ -120,6 +141,80 @@ public static class SnapshotBuilder {
 			} catch { /* IL2CPP nullable wrapper can be flaky; tolerate */ }
 		} catch (Exception ex) {
 			Plugin.Log.LogError($"CaptureRunData failed: {ex}");
+		}
+	}
+	static void CaptureAffinities(BuildSnapshot snap) {
+		try {
+			var ws = WorldStats.Instance;
+			if (ws == null) return;
+			var affs = ws.CurrentAffinityPoints;
+			if (affs == null) return;
+			// Iterate EAffinity values via GetAffinityScore for safety; record non-zero entries.
+			foreach (EAffinity a in System.Enum.GetValues(typeof(EAffinity))) {
+				if (a == EAffinity.None) continue;
+				int score;
+				try { score = affs.GetAffinityScore(a); } catch { continue; }
+				if (score != 0) snap.Affinities[a.ToString()] = score;
+			}
+		} catch (Exception ex) {
+			Plugin.Log.LogWarning($"CaptureAffinities failed: {ex.Message}");
+		}
+	}
+
+	static void CaptureSpecialisations(BuildSnapshot snap) {
+		try {
+			var pc = PlayerCharacter.Instance;
+			if (pc == null) return;
+			var eh = pc._evolutionHandler;
+			if (eh == null) return;
+			foreach (ESpecializationAbilityId id in System.Enum.GetValues(typeof(ESpecializationAbilityId))) {
+				if (id == ESpecializationAbilityId.Invalid) continue;
+				try { if (eh.HasSpecialization(id)) snap.Specialisations.Add(id.ToString()); }
+				catch { /* skip */ }
+			}
+		} catch (Exception ex) {
+			Plugin.Log.LogWarning($"CaptureSpecialisations failed: {ex.Message}");
+		}
+	}
+
+	static void CaptureCosmetics(BuildSnapshot snap) {
+		try {
+			var cm = CosmeticsRuntimeManager.Instance;
+			if (cm == null) return;
+			var dict = cm._currentlyEquippedCosmetics;
+			if (dict == null) return;
+			foreach (var kv in dict) {
+				if (kv.Value == ECosmetic.None) continue;
+				snap.Cosmetics[kv.Key.ToString()] = kv.Value.ToString();
+			}
+		} catch (Exception ex) {
+			Plugin.Log.LogWarning($"CaptureCosmetics failed: {ex.Message}");
+		}
+	}
+	static void CaptureAbilityPicks(BuildSnapshot snap) {
+		try {
+			var pc = PlayerCharacter.Instance;
+			if (pc == null) return;
+			var eh = pc._evolutionHandler;
+			if (eh == null) return;
+			foreach (World.Evolutions.EEvolutionAbilityId id in System.Enum.GetValues(typeof(World.Evolutions.EEvolutionAbilityId))) {
+				if ((int)id == 0) continue; // Invalid
+				try {
+					int lvl = 0;
+					bool has = false;
+					try { has = eh.HasEvolution(id, out lvl); } catch { continue; }
+					if (!has || lvl <= 0) continue;
+					General.ERarity rarity = General.ERarity.Common;
+					try { eh.TryGetRarityForAbility(id, out rarity); } catch { }
+					snap.AbilityPicks.Add(new AbilityPick {
+						AbilityId = id.ToString(),
+						Rarity = rarity.ToString(),
+						Level = lvl,
+					});
+				} catch { /* skip individual */ }
+			}
+		} catch (System.Exception ex) {
+			Plugin.Log.LogWarning($"CaptureAbilityPicks failed: {ex.Message}");
 		}
 	}
 }
