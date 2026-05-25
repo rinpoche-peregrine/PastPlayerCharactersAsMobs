@@ -1,13 +1,13 @@
 # Past Player Characters as Mobs
 
-Snapshots your build every 5 player levels starting at 20. Future versions will spawn those past selves as Alpha mobs. This v0.1.0 release only captures the snapshots. No ghosts yet.
+Snapshots your evolution build every 5 player levels (starting at level 20). In future runs, those past selves spawn as Alpha + Shiny mobs with the snapshot's stats, evolutions, and animations.
 
-You can confirm it works after a run by opening `BepInEx/config/com.bungus.everythingiscrab.pastplayercharactersasmobs/snapshots.json`.
+Saved snapshots live at `BepInEx/config/com.bungus.everythingiscrab.pastplayercharactersasmobs/snapshots.json`. Inspectable and safe to wipe.
 
 ## Requirements
 
 - *Everything is Crab* (tested 1.0.1__8213).
-- BepInEx 6 BleedingEdge IL2CPP (CoreCLR), build 755 or newer. The stable Thunderstore BepInEx packs do not work on Unity 6.
+- BepInEx 6 BleedingEdge IL2CPP (CoreCLR), build 755 or newer. Stable Thunderstore BepInEx packs do not work on Unity 6.
 
 ## Install (manual)
 
@@ -21,7 +21,7 @@ Use "Install from file" with this zip in r2modman, Gale, or the Thunderstore App
 
 ## Uninstall
 
-Delete `BepInEx/plugins/Bungus-PastPlayerCharactersAsMobs/`. You may also want to delete `BepInEx/config/com.bungus.everythingiscrab.pastplayercharactersasmobs/` if you want to wipe saved snapshots.
+Delete `BepInEx/plugins/Bungus-PastPlayerCharactersAsMobs/`. To also wipe saved snapshots, delete `BepInEx/config/com.bungus.everythingiscrab.pastplayercharactersasmobs/`.
 
 ## Author
 
@@ -29,4 +29,4 @@ Bungus
 
 ## Source
 
-<https://github.com/rinpoche-peregrine/PastPlayerCharactersAsMobs>
+https://github.com/rinpoche-peregrine/PastPlayerCharactersAsMobs
